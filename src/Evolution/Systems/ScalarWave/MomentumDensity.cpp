@@ -14,7 +14,7 @@ namespace ScalarWave {
 template <size_t SpatialDim>
 void momentum_density(
     gsl::not_null<tnsr::i<DataVector, SpatialDim, Frame::Inertial>*> result,
-    const Scalar<DataVector>& pi,
+    const tnsr::i<DataVector, SpatialDim, Frame::Inertial>& pi,
     const tnsr::i<DataVector, SpatialDim, Frame::Inertial>& phi) {
   for (size_t i = 0; i < 3; i++) {
     result->get(i) = pi * phi.get(i);
@@ -23,9 +23,9 @@ void momentum_density(
 
 template <size_t SpatialDim>
 tnsr::i<DataVector, SpatialDim, Frame::Inertial> momentum_density(
-    const Scalar<DataVector>& pi,
+    const tnsr::i<DataVector, SpatialDim, Frame::Inertial>* pi,
     const tnsr::i<DataVector, SpatialDim, Frame::Inertial>& phi) {
-  tnsr::i<DataVector, SpatialDim, Frame::Inertial> result{get(phi).size()};
+  tnsr::i<DataVector, SpatialDim, Frame::Inertial> result{get(pi).size()};
   momentum_density(make_not_null(&result), pi, phi);
   return result;
 }
@@ -34,11 +34,11 @@ tnsr::i<DataVector, SpatialDim, Frame::Inertial> momentum_density(
 
 #define DIM(data) BOOST_PP_TUPLE_ELEM(0, data)
 
-#define INSTANTIATE(_, data)                                                  \
-  template void ScalarWave::momentum_density(                                 \
-      gsl::not_null<tnsr::i<DataVector, DIM(data), Frame::Inertial>*> result, \
-      const Scalar<DataVector>& pi,                                           \
-      const tnsr::i<DataVector, DIM(data), Frame::Inertial>& phi);
+#define INSTANTIATE(_, data)
+template void ScalarWave::momentum_density(
+    gsl::not_null<tnsr::i<DataVector, SpatialDim, Frame::Inertial>*> result,
+    const tnsr::i<DataVector, SpatialDim, Frame::Inertial>& pi,
+    const tnsr::i<DataVector, DIM(data), Frame::Inertial>& phi);
 
 GENERATE_INSTANTIATIONS(INSTANTIATE, (1, 2, 3))
 
