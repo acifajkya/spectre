@@ -62,7 +62,7 @@ SPECTRE_TEST_CASE("Unit.Evolution.Systems.ScalarWave.MomentumDensity",
       "Evolution/Systems/ScalarWave/");
 
   const DataVector used_for_size(5);
-  test_momentum_density<3>(used_for_size);
-  // test_momentum_density<2>(used_for_size);
-  // test_momentum_density<3>(used_for_size);
+   test_momentum_density<1>(used_for_size);
+   test_momentum_density<2>(used_for_size);
+   test_momentum_density<3>(used_for_size);
 }
