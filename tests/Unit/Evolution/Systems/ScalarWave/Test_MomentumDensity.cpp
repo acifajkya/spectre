@@ -26,15 +26,18 @@ void test_compute_item_in_databox(const DataType& used_for_size) {
   MAKE_GENERATOR(generator);
   std::uniform_real_distribution<> dist(-1., 1.);
 
+
   const Scalar<DataVector> pi =
       make_with_random_values<Scalar<DataVector>>(
           make_not_null(&generator), dist, used_for_size);
+
   const tnsr::i<DataVector, SpatialDim, Frame::Inertial> phi =
       make_with_random_values<tnsr::i<DataVector, SpatialDim, Frame::Inertial>>(
           make_not_null(&generator), dist, used_for_size);
 
   const auto box = db::create<
-      db::AddSimpleTags<ScalarWave::Pi, ScalarWave::Phi<SpatialDim>>,
+      db::AddSimpleTags<ScalarWave::Tags::Pi,
+                        ScalarWave::Tags::Phi<SpatialDim>>,
       db::AddComputeTags<ScalarWave::Tags::MomentumDensityCompute<SpatialDim>>>(
       pi, phi);
 
@@ -48,7 +51,7 @@ template <size_t SpatialDim>
 void test_momentum_density(const DataVector& used_for_size) {
   void (*f)(
       const gsl::not_null<tnsr::i<DataVector, SpatialDim, Frame::Inertial>*>,
-      const tnsr::i<DataVector, SpatialDim, Frame::Inertial>&,
+      const Scalar<DataVector>&,
       const tnsr::i<DataVector, SpatialDim, Frame::Inertial>&) =
       &ScalarWave::momentum_density<SpatialDim>;
   pypp::check_with_random_values<1>(f, "MomentumDensity", {"momentum_density"},
