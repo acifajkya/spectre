@@ -260,7 +260,9 @@ struct WeylMagnetic : db::SimpleTag {
  */
 template <typename DataType, size_t Dim, typename Frame>
 struct WeylTypeD1 : db::SimpleTag {
-  using type = tnsr::ii<DataType, 3, Frame>;
+  using type =
+      tnsr::ii<typename tenex::detail::get_complex_datatype<DataType>::type,
+               Dim, Frame>;
 };
 
 /*!

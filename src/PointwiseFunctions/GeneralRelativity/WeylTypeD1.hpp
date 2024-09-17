@@ -35,15 +35,22 @@ namespace gr {
  * electric part ofthe Weyl tensor.
  */
 template <typename DataType, size_t SpatialDim, typename Frame>
-tnsr::ii<DataType, SpatialDim, Frame> weyl_type_D1(
+tnsr::ii<typename tenex::detail::get_complex_datatype<DataType>::type,
+         SpatialDim, Frame>
+weyl_type_D1(
     const tnsr::ii<DataType, SpatialDim, Frame>& weyl_electric,
+    const tnsr::ii<DataType, SpatialDim, Frame>& weyl_magnetic,
     const tnsr::ii<DataType, SpatialDim, Frame>& spatial_metric,
     const tnsr::II<DataType, SpatialDim, Frame>& inverse_spatial_metric);
 
 template <typename DataType, size_t SpatialDim, typename Frame>
 void weyl_type_D1(
-    gsl::not_null<tnsr::ii<DataType, SpatialDim, Frame>*> weyl_type_D1,
+    const gsl::not_null<
+        tnsr::ii<typename tenex::detail::get_complex_datatype<DataType>::type,
+                 SpatialDim, Frame>*>
+        weyl_type_D1,
     const tnsr::ii<DataType, SpatialDim, Frame>& weyl_electric,
+    const tnsr::ii<DataType, SpatialDim, Frame>& weyl_magnetic,
     const tnsr::ii<DataType, SpatialDim, Frame>& spatial_metric,
     const tnsr::II<DataType, SpatialDim, Frame>& inverse_spatial_metric);
 /// @}
@@ -62,7 +69,9 @@ void weyl_type_D1(
  */
 template <typename DataType, size_t SpatialDim, typename Frame>
 void weyl_type_D1_scalar(
-    gsl::not_null<Scalar<DataType>*> weyl_type_D1_scalar_result,
+    gsl::not_null<
+        Scalar<typename tenex::detail::get_complex_datatype<DataType>::type>*>
+        weyl_type_D1_scalar_result,
     const tnsr::ii<DataType, SpatialDim, Frame>& weyl_type_D1,
     const tnsr::II<DataType, SpatialDim, Frame>& inverse_spatial_metric);
 
@@ -75,7 +84,8 @@ Scalar<DataType> weyl_type_D1_scalar(
 
 namespace Tags {
 /// Compute item for WeylTypeD1
-/// Computed from WeylElectric, SpatialMetric, and InverseSpatialMetric
+/// Computed from WeylElectric, WeylMagnetic, SpatialMetric, and
+/// InverseSpatialMetric
 ///
 /// Can be retrieved using gr::Tags::WeylTypeD1
 template <typename DataType, size_t SpatialDim, typename Frame>
@@ -83,13 +93,19 @@ struct WeylTypeD1Compute : WeylTypeD1<DataType, SpatialDim, Frame>,
                            db::ComputeTag {
   using argument_tags =
       tmpl::list<gr::Tags::WeylElectric<DataType, SpatialDim, Frame>,
+                 gr::Tags::WeylMagnetic<DataType, SpatialDim, Frame>,
                  gr::Tags::SpatialMetric<DataType, SpatialDim, Frame>,
                  gr::Tags::InverseSpatialMetric<DataType, SpatialDim, Frame>>;
 
-  using return_type = tnsr::ii<DataType, SpatialDim, Frame>;
+  using return_type =
+      tnsr::ii<typename tenex::detail::get_complex_datatype<DataType>::type,
+               SpatialDim, Frame>;
 
   static constexpr auto function = static_cast<void (*)(
-      gsl::not_null<tnsr::ii<DataType, SpatialDim, Frame>*>,
+      gsl::not_null<
+          tnsr::ii<typename tenex::detail::get_complex_datatype<DataType>::type,
+                   SpatialDim, Frame>*>,
+      const tnsr::ii<DataType, SpatialDim, Frame>&,
       const tnsr::ii<DataType, SpatialDim, Frame>&,
       const tnsr::ii<DataType, SpatialDim, Frame>&,
       const tnsr::II<DataType, SpatialDim, Frame>&)>(
@@ -105,13 +121,17 @@ struct WeylTypeD1ScalarCompute : WeylTypeD1Scalar<DataType>, db::ComputeTag {
       tmpl::list<gr::Tags::WeylTypeD1Compute<DataType, SpatialDim, Frame>,
                  gr::Tags::InverseSpatialMetric<DataType, SpatialDim, Frame>>;
 
-  using return_type = Scalar<DataType>;
+  using return_type =
+      Scalar<typename tenex::detail::get_complex_datatype<DataType>::type>;
 
-  static constexpr auto function =
-      static_cast<void (*)(gsl::not_null<Scalar<DataType>*>,
-                           const tnsr::ii<DataType, SpatialDim, Frame>&,
-                           const tnsr::II<DataType, SpatialDim, Frame>&)>(
-          &gr::weyl_type_D1_scalar<DataType, SpatialDim, Frame>);
+  static constexpr auto function = static_cast<void (*)(
+      gsl::not_null<Scalar<
+          typename tenex::detail::get_complex_datatype<DataType>::type>*>,
+      const tnsr::ii<
+          typename tenex::detail::get_complex_datatype<DataType>::type,
+          SpatialDim, Frame>&,
+      const tnsr::II<DataType, SpatialDim, Frame>&)>(
+      &gr::weyl_type_D1_scalar<DataType, SpatialDim, Frame>);
 
   using base = WeylTypeD1Scalar<DataType>;
 };

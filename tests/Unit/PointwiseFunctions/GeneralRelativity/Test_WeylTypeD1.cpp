@@ -16,9 +16,10 @@
 #include "PointwiseFunctions/GeneralRelativity/Tags.hpp"
 #include "PointwiseFunctions/GeneralRelativity/TagsDeclarations.hpp"
 #include "PointwiseFunctions/GeneralRelativity/WeylElectric.hpp"
+#include "PointwiseFunctions/GeneralRelativity/WeylMagnetic.hpp"
 #include "PointwiseFunctions/GeneralRelativity/WeylTypeD1.hpp"
 
-namespace {
+namespace gr {
 template <size_t SpatialDim, typename DataType>
 void test_compute_item_in_databox(const DataType& used_for_size) {
   TestHelpers::db::test_compute_tag<
@@ -36,6 +37,9 @@ void test_compute_item_in_databox(const DataType& used_for_size) {
   const auto weyl_electric =
       make_with_random_values<tnsr::ii<DataType, SpatialDim>>(
           nn_generator, nn_distribution, used_for_size);
+  const auto weyl_magnetic =
+      make_with_random_values<tnsr::ii<DataType, SpatialDim>>(
+          nn_generator, nn_distribution, used_for_size);
   const auto spatial_metric =
       make_with_random_values<tnsr::ii<DataType, SpatialDim>>(
           nn_generator, nn_distribution, used_for_size);
@@ -46,6 +50,7 @@ void test_compute_item_in_databox(const DataType& used_for_size) {
   const auto box = db::create<
       db::AddSimpleTags<
           gr::Tags::WeylElectric<DataType, SpatialDim, Frame::Inertial>,
+          gr::Tags::WeylMagnetic<DataType, SpatialDim, Frame::Inertial>,
           gr::Tags::SpatialMetric<DataType, SpatialDim, Frame::Inertial>,
           gr::Tags::InverseSpatialMetric<DataType, SpatialDim,
                                          Frame::Inertial>>,
@@ -53,12 +58,12 @@ void test_compute_item_in_databox(const DataType& used_for_size) {
           gr::Tags::WeylTypeD1Compute<DataType, SpatialDim, Frame::Inertial>,
           gr::Tags::WeylTypeD1ScalarCompute<DataType, SpatialDim,
                                             Frame::Inertial>>>(
-      weyl_electric, spatial_metric, inverse_spatial_metric);
+      weyl_electric, weyl_magnetic, spatial_metric, inverse_spatial_metric);
 
-  const auto expected =
-      gr::weyl_type_D1(weyl_electric, spatial_metric, inverse_spatial_metric);
+  const auto expected = weyl_type_D1(weyl_electric, weyl_magnetic,
+                                     spatial_metric, inverse_spatial_metric);
   const auto expected_scalar =
-      gr::weyl_type_D1_scalar(expected, inverse_spatial_metric);
+      weyl_type_D1_scalar(expected, inverse_spatial_metric);
   CHECK_ITERABLE_APPROX(
       (db::get<gr::Tags::WeylTypeD1<DataType, SpatialDim, Frame::Inertial>>(
           box)),
@@ -69,26 +74,29 @@ void test_compute_item_in_databox(const DataType& used_for_size) {
 
 template <size_t SpatialDim, typename DataType>
 void test_weyl_type_D1(const DataType& used_for_size) {
-  tnsr::ii<DataType, SpatialDim, Frame::Inertial> (*f)(
+  using ComplexType =
+      typename tenex::detail::get_complex_datatype<DataType>::type;
+  tnsr::ii<ComplexType, SpatialDim, Frame::Inertial> (*f)(
+      const tnsr::ii<DataType, SpatialDim, Frame::Inertial>&,
       const tnsr::ii<DataType, SpatialDim, Frame::Inertial>&,
       const tnsr::ii<DataType, SpatialDim, Frame::Inertial>&,
       const tnsr::II<DataType, SpatialDim, Frame::Inertial>&) =
-      &gr::weyl_type_D1<DataType, SpatialDim, Frame::Inertial>;
+      &weyl_type_D1<DataType, SpatialDim, Frame::Inertial>;
   pypp::check_with_random_values<1>(f, "WeylTypeD1", "weyl_type_D1",
                                     {{{-1., 1.}}}, used_for_size);
 }
 
 template <size_t SpatialDim, typename DataType>
 void test_weyl_type_D1_scalar(const DataType& used_for_size) {
-  Scalar<DataType> (*f)(
+  Scalar<ComplexType> (*f)(
       const tnsr::ii<DataType, SpatialDim, Frame::Inertial>&,
       const tnsr::II<DataType, SpatialDim, Frame::Inertial>&) =
-      &gr::weyl_type_D1_scalar<DataType, SpatialDim, Frame::Inertial>;
+      &weyl_type_D1_scalar<DataType, SpatialDim, Frame::Inertial>;
   pypp::check_with_random_values<1>(f, "WeylTypeD1Scalar",
                                     "weyl_type_D1_scalar", {{{-1., 1.}}},
                                     used_for_size);
 }
-}  // namespace
+}  // namespace gr
 
 SPECTRE_TEST_CASE("Unit.PointwiseFunctions.GeneralRelativity.WeylTypeD1",
                   "[PointwiseFunctions][Unit]") {
@@ -97,8 +105,8 @@ SPECTRE_TEST_CASE("Unit.PointwiseFunctions.GeneralRelativity.WeylTypeD1",
 
   GENERATE_UNINITIALIZED_DOUBLE_AND_DATAVECTOR;
 
-  CHECK_FOR_DOUBLES_AND_DATAVECTORS(test_weyl_type_D1, (1, 2, 3));
-  CHECK_FOR_DOUBLES_AND_DATAVECTORS(test_weyl_type_D1_scalar, (1, 2, 3));
-  test_compute_item_in_databox<3>(d);
-  test_compute_item_in_databox<3>(dv);
+  CHECK_FOR_DOUBLES_AND_DATAVECTORS(gr::test_weyl_type_D1, (1, 2, 3));
+  CHECK_FOR_DOUBLES_AND_DATAVECTORS(gr::test_weyl_type_D1_scalar, (1, 2, 3));
+  gr::test_compute_item_in_databox<3>(d);
+  gr::test_compute_item_in_databox<3>(dv);
 }
